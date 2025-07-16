@@ -3,27 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>時間計數器</title>
+  <title>跟寶寶在一起的時間</title>
   <style>
-    body {
+    :root {
+      --bg: linear-gradient(to bottom right, #ffcccc, #ffe6f2);
+    }
+
+    html, body {
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', 'Noto Sans TC', sans-serif;
-      background: linear-gradient(to bottom right, #ffcccc, #ffe6f2);
+      height: 100vh;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      background: var(--bg);
+      transition: background 2s;
     }
 
     .container {
-      background: white;
+      background: rgba(255, 255, 255, 0.25); /* 半透明背景 */
+      backdrop-filter: blur(10px); /* 毛玻璃效果 */
       border-radius: 24px;
       box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
       padding: 28px 20px;
       max-width: 320px;
       width: 90%;
       text-align: center;
+      z-index: 2;
+      transition: background 2s;
     }
 
     h1 {
@@ -38,24 +47,16 @@
       display: inline-block;
       animation: heartbeat 1.5s infinite;
       transform-origin: center;
+      position: relative;
+      cursor: pointer;
     }
 
     @keyframes heartbeat {
-      0%, 100% {
-        transform: scale(1);
-      }
-      14% {
-        transform: scale(1.3);
-      }
-      28% {
-        transform: scale(1);
-      }
-      42% {
-        transform: scale(1.2);
-      }
-      70% {
-        transform: scale(1);
-      }
+      0%, 100% { transform: scale(1); }
+      14% { transform: scale(1.3); }
+      28% { transform: scale(1); }
+      42% { transform: scale(1.2); }
+      70% { transform: scale(1); }
     }
 
     .time-box {
@@ -76,47 +77,231 @@
       font-weight: 500;
       margin-top: 6px;
     }
+
+    .love-bubble {
+      position: absolute;
+      color: #e75480;
+      font-size: 14px;
+      font-weight: bold;
+      animation: floatUp 1s ease-out forwards;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-40px); }
+    }
+
+    #gift {
+      display: none;
+      font-size: 48px;
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 99;
+      animation: bounce 0.5s ease infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .emoji-pop {
+      position: absolute;
+      font-size: 24px;
+      pointer-events: none;
+      animation: emoji-float 1s ease-out forwards;
+    }
+
+    @keyframes emoji-float {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-60px); }
+    }
+
+    .easter-egg {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px 30px;
+      border-radius: 20px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.2);
+      font-size: 20px;
+      color: #e75480;
+      font-weight: bold;
+      z-index: 999;
+      opacity: 0;
+      animation: fadeInOut 3s ease-in-out forwards;
+    }
+
+    @keyframes fadeInOut {
+      0% { opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🥺 寶寶真的真的好喜歡你 <span class="heartbeat">❤️</span></h1>
+  <canvas id="fireworks"></canvas>
+
+  <div class="container" id="main-content">
+    <h1>🥺 寶寶真的真的好喜歡你 <span class="heartbeat" id="heart">❤️</span></h1>
     <div class="time-box" id="time-box"></div>
     <div class="sub-text" id="sub-text"></div>
   </div>
 
+  <div id="gift">🎁</div>
+
   <script>
-    function updateTime() {
+    start();
+
+    function start() {
       const startDate = new Date('2024-07-06T00:00:00');
-      const now = new Date();
-      const diff = now - startDate;
+      const timeBox = document.getElementById('time-box');
+      const subText = document.getElementById('sub-text');
+      const gift = document.getElementById('gift');
+      const heart = document.getElementById('heart');
 
-      const totalDays = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-      const minutes = Math.floor((diff / (1000 * 60)) % 60);
-      const seconds = Math.floor((diff / 1000) % 60);
+      function updateTime() {
+        const now = new Date();
+        const diff = now - startDate;
+        const totalDays = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((diff / (1000 * 60)) % 60);
+        const seconds = Math.floor((diff / 1000) % 60);
+        const pad = n => n.toString().padStart(2, '0');
 
-      let months = (now.getFullYear() - startDate.getFullYear()) * 12 + (now.getMonth() - startDate.getMonth());
-      let tempDate = new Date(startDate);
-      tempDate.setMonth(tempDate.getMonth() + months);
+        let years = now.getFullYear() - startDate.getFullYear();
+        let months = now.getMonth() - startDate.getMonth();
+        if (months < 0) { years--; months += 12; }
 
-      if (now < tempDate) {
-        months--;
-        tempDate.setMonth(tempDate.getMonth() - 1);
+        const tempDate = new Date(startDate);
+        tempDate.setFullYear(startDate.getFullYear() + years);
+        tempDate.setMonth(startDate.getMonth() + months);
+        const remainingMs = now - tempDate;
+        const remainingDays = Math.floor(remainingMs / (1000 * 60 * 60 * 24));
+
+        timeBox.innerText = `${totalDays} 天 ${pad(hours)} 小時 ${pad(minutes)} 分 ${pad(seconds)} 秒`;
+        subText.innerText = `也就是 ${years} 年 ${months} 個月又 ${remainingDays} 天啦！`;
+
+        if (remainingDays === 0 && hours === 0 && minutes === 0 && seconds === 0) {
+          gift.style.display = 'block';
+          setTimeout(() => gift.style.display = 'none', 3000);
+        }
       }
 
-      const remainingMs = now - tempDate;
-      const remainingDays = Math.floor(remainingMs / (1000 * 60 * 60 * 24));
+      setInterval(updateTime, 1000);
+      updateTime();
 
-      document.getElementById('time-box').innerText =
-        `${null} 天 ${null} 小時 ${null} 分 ${null} 秒`;
+      const gradients = [
+        "linear-gradient(to bottom right, #ffcccc, #ffe6f2)",
+        "linear-gradient(to bottom right, #c1f0f6, #fef6e4)",
+        "linear-gradient(to bottom right, #ffe6cc, #ffd6e0)",
+        "linear-gradient(to bottom right, #e0c3fc, #8ec5fc)",
+        "linear-gradient(to bottom right, #fbc2eb, #a6c1ee)",
+        "linear-gradient(to bottom right, #fbd3e9, #bbded6)"
+      ];
+      let currentIndex = 1;
+      setInterval(() => {
+        document.documentElement.style.setProperty('--bg', gradients[currentIndex]);
+        currentIndex = (currentIndex + 1) % gradients.length;
+      }, 5000);
 
-      document.getElementById('sub-text').innerText =
-        `也就是 ${null} 個月又 ${null} 天啦！`;
+      const messages = ["愛你！", "想你惹～", "大笨蛋！", "抱抱～", "想瑟瑟", "啾啾", "超愛你!"];
+      heart.addEventListener('click', function (e) {
+        const msg = document.createElement('span');
+        msg.innerText = messages[Math.floor(Math.random() * messages.length)];
+        msg.className = 'love-bubble';
+        msg.style.left = `${e.offsetX}px`;
+        msg.style.top = `${e.offsetY}px`;
+        heart.appendChild(msg);
+        setTimeout(() => msg.remove(), 1000);
+      });
+
+      let holdTimer = null;
+      heart.addEventListener('mousedown', () => {
+        holdTimer = setTimeout(() => {
+          const egg = document.createElement('div');
+          egg.className = 'easter-egg';
+          egg.innerText = "ㄏㄚˋ這都被你找到了 汪汪汪！我真的超級無敵愛你 💖";
+          document.body.appendChild(egg);
+          setTimeout(() => egg.remove(), 3000);
+        }, 1500);
+      });
+      heart.addEventListener('mouseup', () => clearTimeout(holdTimer));
+      heart.addEventListener('mouseleave', () => clearTimeout(holdTimer));
+
+      const emojis = ["🐻", "😘", "🥰", "👊", "😡", "✨", "🔞", "😾"];
+      document.body.addEventListener('click', function (e) {
+        const emoji = document.createElement('div');
+        emoji.className = 'emoji-pop';
+        emoji.style.left = `${e.clientX}px`;
+        emoji.style.top = `${e.clientY}px`;
+        emoji.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+        document.body.appendChild(emoji);
+        setTimeout(() => emoji.remove(), 1000);
+      });
+
+      const canvas = document.getElementById('fireworks');
+      const ctx = canvas.getContext('2d');
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      const particles = [];
+      document.addEventListener('click', e => {
+        for (let i = 0; i < 20; i++) {
+          particles.push({
+            x: e.clientX,
+            y: e.clientY,
+            angle: Math.random() * 2 * Math.PI,
+            speed: Math.random() * 5 + 2,
+            radius: 2 + Math.random() * 3,
+            alpha: 1
+          });
+        }
+      });
+
+      function drawFireworks() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          const dx = Math.cos(p.angle) * p.speed;
+          const dy = Math.sin(p.angle) * p.speed;
+          p.x += dx;
+          p.y += dy;
+          p.alpha -= 0.02;
+        });
+        ctx.fillStyle = 'rgba(255, 100, 150, 0.8)';
+        particles.forEach(p => {
+          if (p.alpha > 0) {
+            ctx.globalAlpha = p.alpha;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI);
+            ctx.fill();
+          }
+        });
+        ctx.globalAlpha = 1;
+        for (let i = particles.length - 1; i >= 0; i--) {
+          if (particles[i].alpha <= 0) particles.splice(i, 1);
+        }
+        requestAnimationFrame(drawFireworks);
+      }
+      drawFireworks();
     }
-
-    setInterval(updateTime, 1000);
-    updateTime();
   </script>
 </body>
 </html>
