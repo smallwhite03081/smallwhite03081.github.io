@@ -23,8 +23,7 @@
     }
 
     .container {
-      background: rgba(255, 255, 255, 0.25); /* 半透明背景 */
-      backdrop-filter: blur(10px); /* 毛玻璃效果 */
+      background: rgba(255, 255, 255, 0.3);
       border-radius: 24px;
       box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
       padding: 28px 20px;
@@ -229,20 +228,29 @@
         setTimeout(() => msg.remove(), 1000);
       });
 
+      // ✅ 手機 & 電腦都能長按觸發
       let holdTimer = null;
-      heart.addEventListener('mousedown', () => {
-        holdTimer = setTimeout(() => {
-          const egg = document.createElement('div');
-          egg.className = 'easter-egg';
-          egg.innerText = "ㄏㄚˋ這都被你找到了 汪汪汪！我真的超級無敵愛你 💖";
-          document.body.appendChild(egg);
-          setTimeout(() => egg.remove(), 3000);
-        }, 1500);
+      function showEasterEgg() {
+        const egg = document.createElement('div');
+        egg.className = 'easter-egg';
+        egg.innerText = "ㄏㄚˋ這都被你找到了 汪汪汪！我真的超級愛你 💖";
+        document.body.appendChild(egg);
+        setTimeout(() => egg.remove(), 3000);
+      }
+
+      heart.addEventListener('mousedown', e => {
+        holdTimer = setTimeout(showEasterEgg, 1500);
       });
       heart.addEventListener('mouseup', () => clearTimeout(holdTimer));
       heart.addEventListener('mouseleave', () => clearTimeout(holdTimer));
+      heart.addEventListener('touchstart', e => {
+        e.preventDefault();
+        holdTimer = setTimeout(showEasterEgg, 1500);
+      }, { passive: false });
+      heart.addEventListener('touchend', () => clearTimeout(holdTimer));
+      heart.addEventListener('touchcancel', () => clearTimeout(holdTimer));
 
-      const emojis = ["🐻", "😘", "🥰", "👊", "😡", "✨", "🔞", "😾"];
+      const emojis = ["🐻", "😘", "🥰", "👊", "😡", "想瑟瑟", "🔞", "😾"];
       document.body.addEventListener('click', function (e) {
         const emoji = document.createElement('div');
         emoji.className = 'emoji-pop';
