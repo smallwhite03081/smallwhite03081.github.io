@@ -217,7 +217,7 @@
         currentIndex = (currentIndex + 1) % gradients.length;
       }, 5000);
 
-      const messages = ["愛你！", "想你惹～", "大笨蛋！", "抱抱～", "想瑟瑟", "啾啾", "超愛你!"];
+      const messages = ["愛你！", "想你惹～", "大笨蛋！", "抱抱～", "啾咪", "超愛你!"];
       heart.addEventListener('click', function (e) {
         const msg = document.createElement('span');
         msg.innerText = messages[Math.floor(Math.random() * messages.length)];
@@ -250,7 +250,7 @@
       heart.addEventListener('touchend', () => clearTimeout(holdTimer));
       heart.addEventListener('touchcancel', () => clearTimeout(holdTimer));
 
-      const emojis = ["🐻", "😘", "🥰", "👊", "😡", "想瑟瑟₍ ˃ᯅ˂）( ꪊꪻ⊂)", "🔞", "😾"];
+      const emojis = ["🐻", "😘", "🥰", "👊", "😡", "🔞", "😾"];
       document.body.addEventListener('click', function (e) {
         const emoji = document.createElement('div');
         emoji.className = 'emoji-pop';
