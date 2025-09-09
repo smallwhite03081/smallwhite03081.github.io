@@ -3,15 +3,77 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>跟寶寶在一起的時間</title>
+  <title>寶寶專屬計時</title>
   <style>
-    :root {
-      --bg: linear-gradient(to bottom right, #ffcccc, #ffe6f2);
+    /* === 載入畫面 === */
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #ff8fa3, #ffd6e0);
+      z-index: 9999;
+      flex-direction: column;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+    #loading-screen.show { opacity: 1; }
+    #loading-screen.hide { opacity: 0; pointer-events: none; }
+
+    .loading-box {
+      width: 320px;
+      padding: 24px 28px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      animation: float 3s ease-in-out infinite;
+    }
+    .loading-text {
+      font-size: 22px;
+      font-weight: bold;
+      color: white;
+      margin-bottom: 16px;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    .loading-bar-bg {
+      background: rgba(255,255,255,0.2);
+      height: 16px;
+      border-radius: 999px;
+      overflow: hidden;
+      box-shadow: inset 0 0 6px rgba(255,255,255,0.4);
+    }
+    .loading-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #fff, #ffe6f2, #fff);
+      background-size: 200% 100%;
+      animation: shimmer 1s infinite linear;
+      border-radius: 999px;
+      transition: width 0.05s ease;
+    }
+    .percent-text {
+      margin-top: 10px;
+      font-size: 18px;
+      color: white;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
     }
 
+    /* === 主畫面 === */
+    :root { --bg: linear-gradient(to bottom right, #ffcccc, #ffe6f2); }
     html, body {
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       font-family: 'Segoe UI', 'Noto Sans TC', sans-serif;
       height: 100vh;
       overflow: hidden;
@@ -21,7 +83,6 @@
       background: var(--bg);
       transition: background 2s;
     }
-
     .container {
       background: rgba(255, 255, 255, 0.3);
       border-radius: 24px;
@@ -32,9 +93,300 @@
       text-align: center;
       z-index: 2;
       transition: background 2s;
+      display: none; /* 預設隱藏，載入完再顯示 */
     }
-
     h1 {
+      font-size: 22px;
+      color: #e75480;
+      margin-bottom: 20px;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px rgba(231, 84, 128, 0.2);
+    }
+    .heartbeat {
+      display: inline-block;
+      animation: heartbeat 1.5s infinite;
+      transform-origin: center;
+      cursor: pointer;
+    }
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      14% { transform: scale(1.3); }
+      28% { transform: scale(1); }
+      42% { transform: scale(1.2); }
+      70% { transform: scale(1); }
+    }
+    .time-box {
+      background: linear-gradient(to right, #ff8fa3, #ffa07a);
+      border-radius: 20px;
+      padding: 12px 20px;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 5px 12px rgba(255, 143, 163, 0.4);
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+    .sub-text {
+      font-size: 16px;
+      color: #e75480;
+      font-weight: 500;
+      margin-top: 6px;
+    }
+    .love-bubble {
+      position: absolute;
+      color: #e75480;
+      font-size: 14px;
+      font-weight: bold;
+      animation: floatUp 1s ease-out forwards;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-40px); }
+    }
+    #gift {
+      display: none;
+      font-size: 48px;
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 99;
+      animation: bounce 0.5s ease infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+    .emoji-pop {
+      position: absolute;
+      font-size: 24px;
+      pointer-events: none;
+      animation: emoji-float 1s ease-out forwards;
+    }
+    @keyframes emoji-float {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-60px); }
+    }
+    .easter-egg {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px 30px;
+      border-radius: 20px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.2);
+      font-size: 20px;
+      color: #e75480;
+      font-weight: bold;
+      z-index: 999;
+      opacity: 0;
+      animation: fadeInOut 3s ease-in-out forwards;
+    }
+    @keyframes fadeInOut {
+      0% { opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    canvas {
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- === 載入畫面 === -->
+  <div id="loading-screen">
+    <div class="loading-box">
+      <div class="loading-text">載入中...</div>
+      <div class="loading-bar-bg">
+        <div class="loading-bar" id="loading-bar"></div>
+      </div>
+      <div class="percent-text" id="percent-text">0%</div>
+    </div>
+  </div>
+
+  <!-- === 主畫面 === -->
+  <canvas id="fireworks"></canvas>
+  <div class="container" id="main-content">
+    <h1>🥺 寶寶真的真的好喜歡你 <span class="heartbeat" id="heart">❤️</span></h1>
+    <div class="time-box" id="time-box"></div>
+    <div class="sub-text" id="sub-text"></div>
+  </div>
+  <div id="gift">🎁</div>
+
+  <script>
+    /* 載入進度條控制 */
+    const loadingScreen = document.getElementById("loading-screen");
+    const loadingBar = document.getElementById("loading-bar");
+    const percentText = document.getElementById("percent-text");
+    const mainContent = document.getElementById("main-content");
+
+    setTimeout(() => loadingScreen.classList.add("show"), 50);
+
+    let progress = 0;
+    const duration = 3000;
+    const interval = 50;
+    const step = 100 / (duration / interval);
+
+    const timer = setInterval(() => {
+      progress += step;
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(timer);
+        loadingScreen.classList.remove("show");
+        loadingScreen.classList.add("hide");
+        setTimeout(() => {
+          loadingScreen.style.display = "none";
+          mainContent.style.display = "block";
+          startApp(); // 啟動主程式
+        }, 800);
+      }
+      loadingBar.style.width = progress + "%";
+      percentText.textContent = Math.floor(progress) + "%";
+    }, interval);
+
+    /* 主畫面邏輯 */
+    function startApp() {
+      const startDate = new Date('2024-07-06T00:00:00');
+      const timeBox = document.getElementById('time-box');
+      const subText = document.getElementById('sub-text');
+      const gift = document.getElementById('gift');
+      const heart = document.getElementById('heart');
+
+      function updateTime() {
+        const now = new Date();
+        const diff = now - startDate;
+        const totalDays = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((diff / (1000 * 60)) % 60);
+        const seconds = Math.floor((diff / 1000) % 60);
+        const pad = n => n.toString().padStart(2, '0');
+
+        let years = now.getFullYear() - startDate.getFullYear();
+        let months = now.getMonth() - startDate.getMonth();
+        if (months < 0) { years--; months += 12; }
+
+        const tempDate = new Date(startDate);
+        tempDate.setFullYear(startDate.getFullYear() + years);
+        tempDate.setMonth(startDate.getMonth() + months);
+        const remainingMs = now - tempDate;
+        const remainingDays = Math.floor(remainingMs / (1000 * 60 * 60 * 24));
+
+        timeBox.innerText = `${totalDays} 天 ${pad(hours)} 小時 ${pad(minutes)} 分 ${pad(seconds)} 秒`;
+        subText.innerText = `也就是 ${years} 年 ${months} 個月又 ${remainingDays} 天啦！`;
+
+        if (remainingDays === 0 && hours === 0 && minutes === 0 && seconds === 0) {
+          gift.style.display = 'block';
+          setTimeout(() => gift.style.display = 'none', 3000);
+        }
+      }
+      setInterval(updateTime, 1000);
+      updateTime();
+
+      const gradients = [
+        "linear-gradient(to bottom right, #ffcccc, #ffe6f2)",
+        "linear-gradient(to bottom right, #c1f0f6, #fef6e4)",
+        "linear-gradient(to bottom right, #ffe6cc, #ffd6e0)",
+        "linear-gradient(to bottom right, #e0c3fc, #8ec5fc)",
+        "linear-gradient(to bottom right, #fbc2eb, #a6c1ee)",
+        "linear-gradient(to bottom right, #fbd3e9, #bbded6)"
+      ];
+      let currentIndex = 1;
+      setInterval(() => {
+        document.documentElement.style.setProperty('--bg', gradients[currentIndex]);
+        currentIndex = (currentIndex + 1) % gradients.length;
+      }, 5000);
+
+      const messages = ["愛你！", "想你惹～", "大笨蛋！", "抱抱～", "啾咪", "超愛你!"];
+      heart.addEventListener('click', function (e) {
+        const msg = document.createElement('span');
+        msg.innerText = messages[Math.floor(Math.random() * messages.length)];
+        msg.className = 'love-bubble';
+        msg.style.left = `${e.offsetX}px`;
+        msg.style.top = `${e.offsetY}px`;
+        heart.appendChild(msg);
+        setTimeout(() => msg.remove(), 1000);
+      });
+
+      let holdTimer = null;
+      function showEasterEgg() {
+        const egg = document.createElement('div');
+        egg.className = 'easter-egg';
+        egg.innerText = "ㄏㄚˋ這都被你找到了 汪汪汪！我真的超級愛你 💖";
+        document.body.appendChild(egg);
+        setTimeout(() => egg.remove(), 3000);
+      }
+      heart.addEventListener('mousedown', e => holdTimer = setTimeout(showEasterEgg, 1500));
+      heart.addEventListener('mouseup', () => clearTimeout(holdTimer));
+      heart.addEventListener('mouseleave', () => clearTimeout(holdTimer));
+      heart.addEventListener('touchstart', e => {
+        e.preventDefault();
+        holdTimer = setTimeout(showEasterEgg, 1500);
+      }, { passive: false });
+      heart.addEventListener('touchend', () => clearTimeout(holdTimer));
+      heart.addEventListener('touchcancel', () => clearTimeout(holdTimer));
+
+      const emojis = ["🐻", "😘", "🥰", "👊", "😡", "🔞", "😾"];
+      document.body.addEventListener('click', function (e) {
+        const emoji = document.createElement('div');
+        emoji.className = 'emoji-pop';
+        emoji.style.left = `${e.clientX}px`;
+        emoji.style.top = `${e.clientY}px`;
+        emoji.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+        document.body.appendChild(emoji);
+        setTimeout(() => emoji.remove(), 1000);
+      });
+
+      const canvas = document.getElementById('fireworks');
+      const ctx = canvas.getContext('2d');
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      const particles = [];
+      document.addEventListener('click', e => {
+        for (let i = 0; i < 20; i++) {
+          particles.push({
+            x: e.clientX, y: e.clientY,
+            angle: Math.random() * 2 * Math.PI,
+            speed: Math.random() * 5 + 2,
+            radius: 2 + Math.random() * 3,
+            alpha: 1
+          });
+        }
+      });
+      function drawFireworks() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          p.x += Math.cos(p.angle) * p.speed;
+          p.y += Math.sin(p.angle) * p.speed;
+          p.alpha -= 0.02;
+        });
+        ctx.fillStyle = 'rgba(255, 100, 150, 0.8)';
+        particles.forEach(p => {
+          if (p.alpha > 0) {
+            ctx.globalAlpha = p.alpha;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI);
+            ctx.fill();
+          }
+        });
+        ctx.globalAlpha = 1;
+        for (let i = particles.length - 1; i >= 0; i--) {
+          if (particles[i].alpha <= 0) particles.splice(i, 1);
+        }
+        requestAnimationFrame(drawFireworks);
+      }
+      drawFireworks();
+    }
+  </script>
+</body>
+</html>    h1 {
       font-size: 22px;
       color: #e75480;
       margin-bottom: 20px;
@@ -313,3 +665,4 @@
   </script>
 </body>
 </html>
+
